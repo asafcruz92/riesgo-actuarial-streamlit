@@ -1,6 +1,5 @@
 import pandas as pd
 import streamlit as st
-from openai import OpenAI
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
@@ -69,62 +68,35 @@ def entrenar_modelo(datos):
 
     return modelo, accuracy
 
+def generar_recomendacion(riesgo, cliente):
+    recomendaciones = []
 
-def obtener_api_key():
-    api_key_secrets = st.secrets.get("OPENAI_API_KEY", "")
+    if riesgo == "Riesgo bajo":
+        recomendaciones.append("Mantener controles preventivos regulares para conservar el perfil de bajo riesgo.")
+        recomendaciones.append("Promover habitos saludables, como actividad fisica, alimentacion balanceada y seguimiento medico basico.")
+        recomendaciones.append("Ofrecer beneficios de fidelizacion o educacion preventiva, ya que el costo esperado es menor.")
+    elif riesgo == "Riesgo medio":
+        recomendaciones.append("Dar seguimiento preventivo con chequeos medicos periodicos para evitar que el riesgo aumente.")
+        recomendaciones.append("Revisar factores como edad, IMC y cargos medicos estimados para ajustar el monitoreo del cliente.")
+        recomendaciones.append("Considerar programas de prevencion y acompanamiento, especialmente si existen factores modificables.")
+    else:
+        recomendaciones.append("Realizar una evaluacion actuarial mas cuidadosa por el mayor nivel de riesgo estimado.")
+        recomendaciones.append("Promover acciones preventivas relacionadas con tabaquismo, control de peso y seguimiento medico.")
+        recomendaciones.append("Analizar el costo esperado con mayor detalle antes de tomar decisiones de tarifacion.")
 
-    if api_key_secrets:
-        return api_key_secrets
+    if cliente["smoker"] == "yes":
+        recomendaciones.append("Como el cliente es fumador, se recomienda incluir orientacion para reducir o abandonar el consumo de tabaco.")
 
-    return st.sidebar.text_input(
-        "API key para recomendaciones",
-        type="password",
-        help="Si la app esta publicada, lo ideal es guardar esta clave en los secrets de Streamlit.",
-    )
+    if cliente["bmi"] >= 30:
+        recomendaciones.append("El IMC se encuentra en un rango alto, por lo que conviene sugerir control de peso y evaluacion medica.")
 
-
-def generar_recomendacion(api_key, riesgo, cliente):
-    if not api_key:
-        return (
-            "Para generar recomendaciones con API, se debe configurar una API key. "
-            "Mientras tanto, el modelo ya puede calcular el nivel de riesgo actuarial."
-        )
-
-    client = OpenAI(api_key=api_key)
-
-    prompt = f"""
-    Eres un asistente actuarial academico. Redacta recomendaciones breves, sencillas y prudentes
-    para un cliente de seguro medico con este perfil:
-
-    Riesgo actuarial predicho: {riesgo}
-    Edad: {cliente["age"]}
-    Sexo: {cliente["sex"]}
-    BMI: {cliente["bmi"]}
-    Hijos: {cliente["children"]}
-    Fumador: {cliente["smoker"]}
-    Region: {cliente["region"]}
-    Cargos medicos estimados: {cliente["charges"]}
-
-    Escribe 3 recomendaciones en espanol claro. No indiques que se debe aprobar o rechazar una poliza.
-    """
-
-    respuesta = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "Responde de forma breve, clara y responsable."},
-            {"role": "user", "content": prompt},
-        ],
-        temperature=0.4,
-    )
-
-    return respuesta.choices[0].message.content
-
+    texto = "\n".join([f"{i + 1}. {recomendacion}" for i, recomendacion in enumerate(recomendaciones[:4])])
+    return texto
 
 datos = cargar_datos()
 modelo, accuracy = entrenar_modelo(datos)
-api_key = obtener_api_key()
 
-st.title("Prediccion de riesgo actuarial - Asaf Cruz - PCAF-03")
+st.title("PREDICCIÓN DE RIESGO ACTUARIAL - Asaf Cruz - PCAF-03")
 st.caption("Regresion Logistica para clasificar riesgo actuarial")
 
 with st.container(border=True):
@@ -190,13 +162,9 @@ if evaluar:
     ).sort_values("probabilidad", ascending=False)
     st.dataframe(tabla_probabilidades, use_container_width=True, hide_index=True)
 
-    st.subheader("Recomendaciones generadas con API")
-    try:
-        recomendacion = generar_recomendacion(api_key, riesgo, cliente.iloc[0].to_dict())
-        st.write(recomendacion)
-    except Exception as error:
-        st.warning("No se pudo generar la recomendacion con API.")
-        st.caption(f"Detalle tecnico: {error}")
+   st.subheader("Recomendaciones automaticas")
+    recomendacion = generar_recomendacion(riesgo, cliente.iloc[0].to_dict())
+    st.write(recomendacion)
 
 st.divider()
 

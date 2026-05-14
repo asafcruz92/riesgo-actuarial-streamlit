@@ -124,7 +124,7 @@ datos = cargar_datos()
 modelo, accuracy = entrenar_modelo(datos)
 api_key = obtener_api_key()
 
-st.title("Prediccion de riesgo actuarial - Su nombre - PCAF-03")
+st.title("Prediccion de riesgo actuarial - Asaf Cruz - PCAF-03")
 st.caption("Regresion Logistica para clasificar riesgo actuarial")
 
 with st.container(border=True):

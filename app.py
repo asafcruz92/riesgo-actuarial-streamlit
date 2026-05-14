@@ -161,6 +161,9 @@ if evaluar:
         }
     ).sort_values("probabilidad", ascending=False)
     st.dataframe(tabla_probabilidades, use_container_width=True, hide_index=True)
+        st.subheader("Recomendaciones automaticas")
+    recomendacion = generar_recomendacion(riesgo, cliente.iloc[0].to_dict())
+    st.markdown(recomendacion.replace("\n", "\n\n"))
 
 st.divider()
 

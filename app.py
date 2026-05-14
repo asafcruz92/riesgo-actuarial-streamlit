@@ -55,7 +55,7 @@ def entrenar_modelo(datos):
                 LogisticRegression(
                     max_iter=1000,
                     random_state=RANDOM_STATE,
-                    solver="liblinear",
+                    solver="sag",
                 ),
             ),
         ]
